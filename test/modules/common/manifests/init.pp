@@ -20,5 +20,24 @@ class common {
 	Package { 'dia': }
 	Package { 'texinfo': }
 	Package { 'cmake': }
+	Package { 'netperf': }
+	Package { 'build-essential': }
+	Package { 'libncurses-dev': }
+	apt::ppa { 'ppa:ubuntu-toolchain-r/test':}
+	Apt::Ppa['ppa:ubuntu-toolchain-r/test'] -> Package['g++-7']
+	Package { 'g++-7': }
+	Exec { 'gcc-update'
+		require => Package['g++-7'],
+		command => "sudo update-alternatives \
+    --install /usr/bin/gcc gcc /usr/bin/gcc-7 60 \
+    --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-7 \
+    --slave /usr/bin/gcc-nm gcc-nm /usr/bin/gcc-nm-7 \
+    --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-7"
+	}
+	Package { 'libssl-dev': }
+	Package { 'grub2': }
+	Package { 'bc': }
+	Package { 'kmod': }
+	Package { 'libkmod2': }
 }
 

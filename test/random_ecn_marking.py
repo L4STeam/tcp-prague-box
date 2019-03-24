@@ -9,16 +9,14 @@ from ipmininet.router.config.base import RouterConfig
 from ipmininet.router.config.ospf import OSPFRedistributedRoute
 
 
-class MinimalAQMNet(IPTopo):
+class MinimalRandomECNNet(IPTopo):
     """
 
-    client1 ---- r1 ---- r2 ---- r3 ---- server1
-                 |                |
-    client2 ---- +                + ---- server2
+    client ---- r1 ---- r2 ---- r3 ---- server
 
     """
     def __init__(self, *args, **kwargs):
-        super(MinimalAQMNet, self).__init__(*args, **kwargs)
+        super(MinimalRandomECNNet, self).__init__(*args, **kwargs)
 
     def build(self, *args, **kwargs):
         r1 = self.addRouter("r1", config=RouterConfig)
@@ -30,22 +28,18 @@ class MinimalAQMNet(IPTopo):
         self.addLink(r1, r2, params1={"ip": "10.0.0.1/24"}, params2={"ip": "10.0.0.2/24"})
         self.addLink(r2, r3, params1={"ip": "10.0.1.1/24"}, params2={"ip": "10.0.1.2/24"})
 
-        client1 = self.addHost("client1")
-        self.addLink(r1, client1, params1={"ip": "10.1.0.1/24"}, params2={"ip": "10.1.0.2/24"})
-        client2 = self.addHost("client2")
-        self.addLink(r1, client2, params1={"ip": "10.1.1.1/24"}, params2={"ip": "10.1.1.2/24"})
+        client = self.addHost("client")
+        self.addLink(r1, client, params1={"ip": "10.1.0.1/24"}, params2={"ip": "10.1.0.2/24"})
 
-        server1 = self.addHost("server1")
-        self.addLink(r3, server1, params1={"ip": "10.2.0.1/24"}, params2={"ip": "10.2.0.2/24"})
-        server2 = self.addHost("server2")
-        self.addLink(r3, server2, params1={"ip": "10.2.1.1/24"}, params2={"ip": "10.2.1.2/24"})
+        server = self.addHost("server")
+        self.addLink(r3, server, params1={"ip": "10.2.0.1/24"}, params2={"ip": "10.2.0.2/24"})
 
-        super(MinimalAQMNet, self).build(*args, **kwargs)
+        super(MinimalRandomECNNet, self).build(*args, **kwargs)
 
 if __name__ == "__main__":
     try:
         subprocess.check_call(["modprobe", "prague"])
-        net = IPNet(topo=MinimalAQMNet(), allocate_IPs=False)
+        net = IPNet(topo=MinimalRandomECNNet(), allocate_IPs=False)
         net.start()
 
         # Set TCP Prague for client1 and server1 and cubic for client2 and server2 Congestion Control on client1 and server1
@@ -54,11 +48,11 @@ if __name__ == "__main__":
         net["client2"].cmd("sysctl -w net.ipv4.tcp_congestion_control=cubic")
         net["server2"].cmd("sysctl -w net.ipv4.tcp_congestion_control=cubic")
 
-        # Setup AQM l4s_dualq
+        # Setup random ecn marking
         net["r2"].cmd("tc qdisc del dev r2-eth0")
         net["r2"].cmd("tc qdisc add dev r2-eth0 root handle 1:0 htb default 1 direct_qlen 1000")
         net["r2"].cmd("tc class add dev r2-eth0 parent 1:0 classid 1:1 htb rate 40Mbit ceil 40Mbit")
-        net["r2"].cmd("tc qdisc add dev r2-eth0 parent 1:1 handle 2:0 dualpi2 target 20ms l4s_ecn l_thresh 1ms l4s_dualq limit 1000")
+        net["r2"].cmd("tc qdisc add dev r2-eth0 parent 1:1 handle 2:0 netem loss 10 ecn")  # Mark 10% of packets with ECN
 
         IPCLI(net)
         net.stop()

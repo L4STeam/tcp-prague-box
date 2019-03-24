@@ -33,7 +33,7 @@ class aqmqdisc (
 		require => [ Exec['iproute2'], Exec['sch_dualpi2-download'] ],
 		cwd => $kernel_module_cwd,
 		command => "make && make load &&\
-								echo \"sudo insmod ${kernel_module_cwd}/sch_dualpi2.ko || true\" > ${user_path}/.bashrc"
+								echo \"sudo insmod ${kernel_module_cwd}/sch_dualpi2.ko 2> /dev/null || true\" > ${user_path}/.bashrc"
 	}
 }
 

@@ -1,10 +1,6 @@
-# The purpose of this puppet file is to install SRv6-compatible kernel and some SRv6 tools
+# The purpose of this puppet file is to install TCP prague kernel and some emulation tools
 
-# TODO Remove
-$non_root_user=vagrant
-# TODO Remove
-
-$home_path="/home/${::non_root_user}"
+$home_path="/home/vagrant"
 $default_path = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Package {
 	allow_virtual => true,
@@ -35,14 +31,5 @@ class { 'picoquic':
 	require => Class['common'],
 }
 
-# TODO
-#class { 'tcp_prague_kernel':
-#	package_path => $::kernel_path,
-#	kernel_version => $::kernel_version,
-#	local_version => $::kernel_local_version,
-#	kdeb_version => $::kernel_kdeb_version,
-#}
-
-# TODO sch_dualpi2_upstream
-# TODO 
+class { 'tcp_prague_kernel': }
 
